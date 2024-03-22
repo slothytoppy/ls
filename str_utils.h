@@ -7,3 +7,4 @@ char* strn_cpy(char*, char*, int);
 char* str_dup(char*);
 char* str_cat(char*, char*);
 char* strn_cat(char*, char*, int);
+int ends_with(char*, char*);

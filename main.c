@@ -2,7 +2,6 @@
 #include <dirent.h>
 #include <errno.h>
 #include <fcntl.h>
-#include <signal.h>
 #include <stdbool.h>
 #include <stdio.h>
 #include <stdlib.h>
@@ -10,27 +9,6 @@
 #include <sys/ioctl.h>
 #include <sys/stat.h>
 #include <unistd.h>
-
-void abort_handler(int signo) {
-  printf("%s", strsignal(signo));
-  psignal(signo, "\ncaught");
-  raise(SIGKILL);
-}
-
-void signal_register(int signo) {
-  printf("%d\n", getpid());
-  struct sigaction sa;
-  sa.sa_handler = abort_handler;
-  sigemptyset(&sa.sa_mask);
-  sigaddset(&sa.sa_mask, SIGKILL);
-  if(sigaction(SIGKILL, &sa, NULL) != 0) {
-    printf("sigaction failed because of: %d", errno);
-  }
-  while(1) {
-  }
-}
-
-// TODO: add colors to print_perms and print_size
 
 char* file_colors[] = {
     "\e[0;32m",
@@ -46,7 +24,7 @@ char* file_colors[] = {
 typedef enum colors {
   size,
   time,
-  dir, // TODO: time and dir should be diff colors
+  dir,
   source,
   reg,
   executable, // size and exe should be diff colors
@@ -148,35 +126,21 @@ int main(int argc, char** argv) {
     return 1;
   }
   while((dirent = readdir(dir)) != NULL) {
+    struct winsize win;
+    ioctl(STDIN_FILENO, TIOCGWINSZ, &win);
     char* dname = dirent->d_name;
     count += strlen(dirent->d_name);
     file_info file_info = {0};
     if(str_len(dname) <= 2 && dname[0] == '.' || dname[0] == '.' && dname[1] == '.') {
       continue;
     }
-    if(argc > 1) {
-      if(str_cmp(argv[1], "-l")) {
-        print_perms(dname);
-        print_size(dname);
-        print_file_color(dname);
-        printf("\n");
-      }
+    if(count > win.ws_col || count + strlen(dname) > win.ws_col) {
+      count = 0;
+      printf("\n");
     }
-    // TODO: add a grid system:tm: for prettier printing, alignment, and customizability
-    if(argc <= 1) {
-      struct winsize win;
-      ioctl(STDIN_FILENO, TIOCGWINSZ, &win);
-      if(count > win.ws_col || count + strlen(dname) > win.ws_col) {
-        count = 0;
-        printf("newline ");
-        // printf("\n");
-      }
-      print_file_color(dname);
-    }
+    print_file_color(dname);
   }
-  if(argc <= 1) {
-    printf("\n");
-  }
+  printf("\n");
   closedir(dir);
   return 0;
 }

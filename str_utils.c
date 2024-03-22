@@ -1,6 +1,7 @@
 #include <limits.h>
 #include <stddef.h>
 void* calloc(size_t nmemb, size_t size);
+int printf(const char*, ...);
 
 unsigned str_len(char* x) {
   unsigned i = 0;
@@ -68,4 +69,26 @@ char* str_dup(char* x) {
 
 char* str_cat(char* x, char* y) {
   return str_cpy(x + str_len(x), y);
+}
+
+int ends_with(char* x, char* suff) {
+  int xlen, sufflen;
+  xlen = str_len(x);
+  sufflen = str_len(suff);
+  if(sufflen > xlen) {
+    printf("sufflen>xlen\n");
+    return 0;
+  }
+  char* xdup = x;
+  char* ydup = suff;
+  int start_len = xlen - sufflen;
+  for(int i = 0; i < sufflen; i++) {
+    if(xdup[start_len + i] != suff[i]) {
+      printf("x:%c y:%c i:%d\n", xdup[start_len + i], ydup[i], i);
+      return 0;
+    }
+  }
+  printf("x:%s suff:%s\n", xdup, ydup);
+  printf("real x:%s real suff:%s\n", x, suff);
+  return 1;
 }
