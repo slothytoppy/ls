@@ -1,5 +1,6 @@
 #include <dirent.h>
 #include <errno.h>
+#include <stdarg.h>
 #include <stdbool.h>
 #include <stdio.h>
 #include <stdlib.h>
@@ -39,42 +40,118 @@ typedef enum renderable_colors {
   reset_colors = white,
 } renderable_colors;
 
+struct color {
+  char* fg;
+  char* bg;
+};
+
+enum {
+  grid,
+  line,
+  tree,
+};
+
+struct renderer {
+  struct color color;
+  char** path;
+  char* separator;
+  int count;
+  int capacity;
+  int spaces_count;
+  bool is_color;
+};
+
+void renderer_append(struct renderer* render, char* path) {
+  if(render->count == 0) {
+    render->capacity = 256;
+    render->path = (char**)calloc(1, sizeof(render->path));
+    render->path[0] = path;
+    render->count += 1;
+    return;
+  }
+
+  render->count += 1;
+  // render->path = (char**)realloc(render->path, (render->count + 1) * sizeof(render->path));
+  render->path = (char**)realloc(render->path, (render->count + 1) * sizeof(char*));
+  render->path[render->count - 1] = path;
+  render->path[render->count] = NULL;
+
+  if(render->count >= render->capacity) {
+    render->capacity *= 2;
+    render->path = (char**)realloc(render->path, render->capacity * sizeof(char*));
+    if(render->path == NULL) {
+      printf("%s", strerror(errno));
+      return;
+    }
+  }
+  return;
+}
+
+void renderer_append_many(struct renderer* rend, int count, ...) {
+  va_list args;
+  va_start(args, count);
+  int i = 0;
+  while(i < count) {
+    char* item = va_arg(args, char*);
+    renderer_append(rend, item);
+    i++;
+  }
+  va_end(args);
+}
+
 void fill_stat(char* x, struct stat* fi) {
   if(lstat(x, fi) < 0) {
     printf("%s", strerror(errno));
   }
 }
 
-void print_type(char* x) {
+char perms[4] = "rwx-";
+char type[3] = "dl.";
+
+char* render_type(char* path) {
   struct stat fi;
-  fill_stat(x, &fi);
+  fill_stat(path, &fi);
+  char* file = malloc(sizeof(char*));
   if(S_ISDIR(fi.st_mode)) {
-    printf("%s", "d");
+    file[0] = type[0];
   } else if(S_ISLNK(fi.st_mode)) {
-    printf("%s", "l");
+    file[0] = type[1];
+  } else {
+    file[0] = type[2];
   }
+  return file;
 }
 
-void print_perms(char* x) {
+void render_perms(struct renderer* rend, int offset, char* path) {
+  if(!path || offset < 0) {
+    return;
+  }
   struct stat fi;
-  fill_stat(x, &fi);
-  print_type(x);
-  printf("%s", (fi.st_mode & S_IRUSR) ? "r" : "-");
-  printf("%s", (fi.st_mode & S_IWUSR) ? "w" : "-");
-  printf("%s", (fi.st_mode & S_IXUSR) ? "x" : "-");
-  printf("%s", (fi.st_mode & S_IRGRP) ? "r" : "-");
-  printf("%s", (fi.st_mode & S_IWGRP) ? "w" : "-");
-  printf("%s", (fi.st_mode & S_IXGRP) ? "x" : "-");
-  printf("%s", (fi.st_mode & S_IROTH) ? "r" : "-");
-  printf("%s", (fi.st_mode & S_IWOTH) ? "w" : "-");
-  printf("%s ", (fi.st_mode & S_IXOTH) ? "x" : "-");
+  renderer_append(rend, path);
+  fill_stat(rend->path[offset], &fi);
+  char* file = calloc(1, strlen(path) + 10);
+  strncat(file, render_type(path), 1);
+  file[1] = (fi.st_mode & S_IRUSR) ? perms[0] : perms[3];
+  file[2] = (fi.st_mode & S_IWUSR) ? perms[1] : perms[3];
+  file[3] = (fi.st_mode & S_IXUSR) ? perms[2] : perms[3];
+  file[4] = (fi.st_mode & S_IRUSR) ? perms[0] : perms[3];
+  file[5] = (fi.st_mode & S_IRUSR) ? perms[1] : perms[3];
+  file[6] = (fi.st_mode & S_IRUSR) ? perms[2] : perms[3];
+  file[7] = (fi.st_mode & S_IRUSR) ? perms[0] : perms[3];
+  file[8] = (fi.st_mode & S_IRUSR) ? perms[1] : perms[3];
+  file[9] = (fi.st_mode & S_IRUSR) ? perms[2] : perms[3];
+  file[10] = ' ';
+  strncat(file + 10, path, strlen(path));
+  // printf("file:%s\n", file);
+  rend->path[offset] = file;
 }
 
-void print_size(char* x) {
+void print_size(struct renderer* rend, int offset, char* path) {
+  if(!path || offset < 0) {
+    return;
+  }
   struct stat fi;
-  fill_stat(x, &fi);
-  printf("\e[0;32m%ld\e[0m ", fi.st_size);
-  // printf("%ld ", fi.st_size);
+  fill_stat(rend->path[offset], &fi);
 }
 
 void print_color(char* x, enum renderable_colors colors) {
@@ -114,52 +191,6 @@ void print_file_color(char* x) {
   }
 }
 
-struct color {
-  char* fg;
-  char* bg;
-};
-
-enum {
-  grid,
-  line,
-  tree,
-};
-
-struct renderer {
-  struct color color;
-  char** path;
-  char* separator;
-  int count;
-  int capacity;
-  int spaces_count;
-  bool is_color;
-};
-
-void renderer_append(struct renderer* render, char* path) {
-  if(render->count == 0) {
-    render->capacity = 256;
-    render->path = (char**)calloc(1, sizeof(render->path));
-    render->path[0] = path;
-    render->count += 1;
-    return;
-  }
-
-  render->count += 1;
-  render->path = (char**)realloc(render->path, (render->count + 1) * sizeof(render->path));
-  render->path[render->count - 1] = path;
-  render->path[render->count] = NULL;
-
-  if(render->count >= render->capacity) {
-    render->capacity *= 2;
-    render->path = (char**)realloc(render->path, render->capacity * sizeof(char*));
-    if(render->path == NULL) {
-      printf("%s", strerror(errno));
-      return;
-    }
-  }
-  return;
-}
-
 struct renderer render(char* path) {
   struct dirent* dirent;
   struct stat fi;
@@ -169,12 +200,14 @@ struct renderer render(char* path) {
     return rend;
   }
   DIR* dir = opendir(path);
-  for(int i = 0; (dirent = readdir(dir)) != NULL; i++) {
+  int i = 0;
+  while((dirent = readdir(dir)) != NULL) {
     char* dname = dirent->d_name;
     if(strlen(dname) <= 2 && dname[0] == '.' || dname[0] == '.' && dname[1] == '.') {
       continue;
     }
-    renderer_append(&rend, dname);
+    render_perms(&rend, i, dname);
+    i++;
   }
   closedir(dir);
   return rend;
