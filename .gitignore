@@ -3,3 +3,8 @@ build
 build.old
 hello
 ncurses_test/test
+render
+sg
+str_tests/t1
+test
+
