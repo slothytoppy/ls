@@ -53,17 +53,23 @@ int main(int argc, char* argv[]) {
   rebuild(argc, argv, __FILE__, "gcc");
   char* program_name = "main.c";
   Nom_cmd cmd = {0};
-  char* files[] = {program_name, "render.c"};
+  char* files[] = {program_name};
   char* libs[] = {"./str_utils.c"};
   if(argc > 1 && strcmp(argv[1], "-d") == 0) {
     nom_cmd_append_many(&cmd, 7, "gcc", "-O0", "-ggdb", "-DDEBUG", "render.c", "-o", "render");
   } else {
     nom_cmd_append_many(&cmd, 6, "gcc", "-O0", "-ggdb", "render.c", "-o", "render");
   }
+  argc -= 1;
+  argv += 1;
+  if(strcmp(argv[argc - 1], "-d") == 0 && argc > 2) {
+    argc -= 1;
+    argv += 1;
+  }
   if(!nom_run_sync(cmd)) {
     return 1;
   }
-  run("render", NULL);
+  run("render", argv);
   build_with_lib(files, libs, 1, 1);
   if(argc >= 3 && strcmp(argv[1], "-build") == 0 && strcmp(argv[2], "run") == 0) {
     for(int i = 0; i < sizeof(files) / sizeof(files[0]); i++) {
