@@ -56,20 +56,24 @@ int main(int argc, char* argv[]) {
   char* files[] = {program_name};
   char* libs[] = {"./str_utils.c"};
   if(argc > 1 && strcmp(argv[1], "-d") == 0) {
-    nom_cmd_append_many(&cmd, 7, "gcc", "-O0", "-ggdb", "-DDEBUG", "render.c", "-o", "render");
+    nom_cmd_append_many(&cmd, 6, "gcc", "-ggdb", "-DDEBUG", "render.c", "-o", "render");
   } else {
-    nom_cmd_append_many(&cmd, 6, "gcc", "-O0", "-ggdb", "render.c", "-o", "render");
-  }
-  argc -= 1;
-  argv += 1;
-  if(strcmp(argv[argc - 1], "-d") == 0 && argc > 2) {
-    argc -= 1;
-    argv += 1;
+    nom_cmd_append_many(&cmd, 5, "gcc", "-ggdb", "render.c", "-o", "render");
   }
   if(!nom_run_sync(cmd)) {
     return 1;
   }
-  run("render", argv);
+  int idup = argc;
+  char** arg_dup = argv;
+  if(argc > 1) {
+    idup -= 1;
+    arg_dup += 1;
+  }
+  if(argc > 2) {
+    idup -= 2;
+    arg_dup += 2;
+  }
+  run("render", arg_dup);
   build_with_lib(files, libs, 1, 1);
   if(argc >= 3 && strcmp(argv[1], "-build") == 0 && strcmp(argv[2], "run") == 0) {
     for(int i = 0; i < sizeof(files) / sizeof(files[0]); i++) {
@@ -77,10 +81,10 @@ int main(int argc, char* argv[]) {
         // char* args[] = {"-l", NULL};
         // run(base(files[i]), args);
       }
-      // TODO: make running nom_build scripts work
-      /* if(!run("./str_tests/build", argv)) {
-      return 1;
-      }*/
+      if(!run("./str_tests/build", argv)) {
+        nom_log(NOM_PANIC, "failed to run ./str_tests/build");
+        return 1;
+      }
     }
   }
   return 0;

@@ -5,14 +5,14 @@
 #include <unistd.h>
 
 int main(int argc, char* argv[]) {
-  char* buf;
-  ssize_t nbytes, bufsiz;
-  struct stat sb;
-
   if(argc != 2) {
     fprintf(stderr, "Usage: %s <pathname>\n", argv[0]);
     exit(EXIT_FAILURE);
   }
+
+  char* buf;
+  ssize_t nbytes, bufsiz;
+  struct stat sb;
 
   if(lstat(argv[1], &sb) == -1) {
     perror("lstat");
@@ -20,16 +20,16 @@ int main(int argc, char* argv[]) {
   }
 
   /* Add one to the link size, so that we can determine whether
-     the buffer returned by readlink() was truncated. */
+   the buffer returned by readlink() was truncated. */
+
+  if(sb.st_size == 0)
+    bufsiz = PATH_MAX;
 
   bufsiz = sb.st_size + 1;
 
   /* Some magic symlinks under (for example) /proc and /sys
      report 'st_size' as zero. In that case, take PATH_MAX as
      a "good enough" estimate. */
-
-  if(sb.st_size == 0)
-    bufsiz = PATH_MAX;
 
   buf = malloc(bufsiz);
   if(buf == NULL) {

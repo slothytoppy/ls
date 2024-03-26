@@ -11,23 +11,26 @@ int main(int argc, char** argv) {
   char* buff = calloc(1, 4096);
   char* cwd = getcwd(buff, 4096);
   char* base_cwd = strrchr(cwd, '/');
+  char* file = calloc(1, strlen("t1.c"));
   base_cwd += 1;
   Nom_cmd cmd = {0};
+  Nom_cmd run = {0};
   if(strcmp(base_cwd, "str_tests") == 0) {
-    nom_log(NOM_PANIC, "base cwd: %s", base_cwd);
     library = "../str_utils.c";
+    file = "t1.c";
     if(!IS_PATH_EXIST(library)) {
       nom_log(NOM_PANIC, "library: %s does not exist", library);
     }
+    nom_cmd_append(&run, "./t1");
   } else {
     library = "str_utils.c";
+    file = realloc(file, strlen(base_cwd) + strlen("t1.c"));
+    file = "./str_tests/t1.c";
+    nom_cmd_append(&run, base(file));
   }
-  nom_cmd_append_many(&cmd, 5, "gcc", "t1.c", library, "-o", "t1");
+  nom_cmd_append_many(&cmd, 5, "gcc", file, library, "-o", base(file));
   nom_run_sync(cmd);
-  nom_cmd_reset(&cmd);
-  nom_cmd_append(&cmd, "./t1");
-
-  if(!nom_run_path(cmd, NULL)) {
+  if(!nom_run_path(run, NULL)) {
     return 1;
   }
 }

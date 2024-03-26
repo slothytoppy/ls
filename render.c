@@ -45,98 +45,33 @@ enum field {
   Path,
 } field;
 
-void renderer_init(struct renderer* render) {
-  unsigned f_count = render->file_count;
-  unsigned t_count = render->type_count;
-  unsigned p_count = render->perms_count;
-  unsigned path_count = render->path_count;
-  if(f_count > 0 || t_count > 0 || p_count > 0 || path_count > 0) {
-    return;
-  }
-#ifdef DEBUG
-  printf("entering %s\n", __FUNCTION__);
-#endif
-  render->capacity = 256;
-  render->file_count += 1;
-  render->type_count += 1;
-  render->perms_count += 1;
-  render->size_count += 1;
-  render->path_count += 1;
-  render->file = (char**)calloc(1, render->capacity * sizeof(render->file));
-  render->type = (char**)calloc(1, render->capacity * sizeof(render->type));
-  render->perms = (char**)calloc(1, render->capacity * sizeof(render->perms));
-  render->size = (char**)calloc(1, render->capacity * sizeof(render->size));
-  render->path = (char**)calloc(1, render->capacity * sizeof(render->path));
-#ifdef DEBUG
-  printf("renderer_init count: %d\n", render->file_count); // all counts are equal here so just pick one to print
-  printf("leaving %s\n", __FUNCTION__);
-#endif
-}
-
-void renderer_over_cap(struct renderer* render, unsigned max) {
-#ifdef DEBUG
-  printf("entering leaving %s\n", __FUNCTION__);
-#endif
-  unsigned f_count = render->file_count;
-  unsigned t_count = render->type_count;
-  unsigned p_count = render->perms_count;
-  unsigned path_count = render->path_count;
-  if(f_count <= render->capacity || t_count <= render->capacity || p_count <= render->capacity || path_count <= render->capacity) {
-    return;
-  }
-  printf("max: %d\n", max);
-  render->capacity *= 2;
-  render->file = (char**)realloc(render->file, max * sizeof(char*));
-  if(render->file == NULL) {
-    printf("in append: file==NULL: %s\n", strerror(errno));
-    return;
-  }
-  render->type = (char**)realloc(render->type, max * sizeof(char*));
-  if(render->type == NULL) {
-    printf("in append: type==NULL: %s\n", strerror(errno));
-    return;
-  }
-  render->perms = (char**)realloc(render->perms, max * sizeof(char*));
-  if(render->perms == NULL) {
-    printf("in append: perms==NULL: %s\n", strerror(errno));
-    return;
-  }
-  render->size = (char**)realloc(render->size, max * sizeof(char*));
-  if(render->size == NULL) {
-    printf("in append: size==NULL: %s\n", strerror(errno));
-    return;
-  }
-  render->path = (char**)realloc(render->path, max * sizeof(char*));
-  if(render->path == NULL) {
-    printf("in append: path==NULL: %s\n", strerror(errno));
-    return;
-  }
-#ifdef DEBUG
-  printf("leaving %s\n", __FUNCTION__);
-#endif
-}
-
 void renderer_append_file(struct renderer* render, enum field field, void* item) {
 #ifdef DEBUG
   printf("entering %s\n", __FUNCTION__);
 #endif
+  const unsigned f_count = render->file_count;
   if(field != File) {
     printf("error in append: type %d was not equal to File\n", field);
     return;
   }
-  unsigned f_count = render->file_count;
-  unsigned t_count = render->type_count;
-  unsigned p_count = render->perms_count;
-  unsigned path_count = render->path_count;
+  if(f_count <= 0) {
+    render->capacity = 256;
+    render->file = (char**)calloc(1, sizeof(char*));
+    render->file[0] = item;
+    render->file_count += 1;
+    return;
+  }
   if(f_count >= render->capacity) {
     render->capacity *= 2;
     render->file = (char**)realloc(render->file, render->capacity + 1 * sizeof(render->file));
+    render->file[render->file_count] = item;
+    render->file_count += 1;
+    return;
   }
   render->file = (char**)realloc(render->file, sizeof(render->file) * render->file_count + 1);
   render->file[render->file_count] = item;
-  unsigned rcount = render->file_count;
-  char* file_offset = render->file[render->file_count];
-  printf("in append_file render->file_count: %d render->size[render->file_count]: %s", rcount, file_offset);
+  const char* file_offset = render->file[render->file_count];
+  printf("in append_file render->file_count: %d render->file[render->file_count]: %s\n", f_count, file_offset);
 #ifdef DEBUG
   printf("leaving %s\n", __FUNCTION__);
 #endif
@@ -150,15 +85,27 @@ void renderer_append_type(struct renderer* render, enum field field, void* item)
     printf("error in append: type %d was not equal to Type\n", field);
     return;
   }
-  if(render->type_count >= render->capacity) {
+  const unsigned rcount = render->type_count;
+  if(rcount <= 0) {
+    render->capacity = 256;
+    render->file = (char**)calloc(1, sizeof(char*));
+    render->file[0] = item;
+    render->type_count += 1;
+    return;
+  }
+  if(rcount >= render->capacity) {
     render->capacity *= 2;
     render->type = (char**)realloc(render->type, render->capacity + 1 * sizeof(render->type));
+    render->type[render->type_count] = item;
+    render->type_count += 1;
+    return;
   }
-  render->type = (char**)realloc(render->type, render->type_count + 1 * sizeof(render->type));
-  render->type[render->type_count] = item;
-  unsigned rcount = render->type_count;
+  // printf("render->type_count: %d\n", render->type_count);
+  // printf("render->type alloc_count: %d\n", render->capacity + 1 * sizeof(render->type));
+  render->type = (char**)realloc(render->type, rcount + 1 * sizeof(render->type));
+  render->type[rcount] = item;
   char* type_offset = render->type[render->type_count];
-  printf("in append_type render->type_count: %d render->size[offset]: %s\n", rcount, type_offset);
+  printf("in append_type render->type_count: %d render->type[offset]: %s\n", rcount, type_offset);
 #ifdef DEBUG
   printf("leaving %s\n", __FUNCTION__);
 #endif
@@ -172,15 +119,24 @@ void renderer_append_perms(struct renderer* render, enum field field, void* item
     printf("error in append: type %d was not equal to Perms\n", field);
     return;
   }
-  if(render->perms_count >= render->capacity) {
+  const unsigned rcount = render->perms_count;
+  if(rcount <= 0) {
+    render->capacity = 256;
+    render->perms = calloc(1, sizeof(char*));
+    render->perms[render->perms_count] = item;
+    render->perms_count += 1;
+    return;
+  }
+  if(rcount >= render->capacity) {
     render->capacity *= 2;
     render->perms = (char**)realloc(render->perms, render->capacity + 1 * sizeof(render->perms));
+    render->perms[render->perms_count] = item;
+    return;
   }
-  render->perms = (char**)realloc(render->perms, render->perms_count + 1 * sizeof(render->perms));
-  render->perms[render->perms_count] = item;
-  unsigned rcount = render->perms_count;
-  char* perms_offset = render->perms[render->perms_count];
-  printf("in append_perms render->perms_count: %d render->size[offset]: %s\n", rcount, perms_offset);
+  render->perms = (char**)realloc(render->perms, rcount + 1 * sizeof(render->perms));
+  render->perms[rcount] = item;
+  const char* const perms_offset = render->perms[render->perms_count];
+  printf("in append_perms render->perms_count: %d render->perms[offset]: %s\n", rcount, perms_offset);
 #ifdef DEBUG
   printf("leaving %s\n", __FUNCTION__);
 #endif
@@ -194,14 +150,25 @@ void renderer_append_size(struct renderer* render, enum field field, void* item)
     printf("error in append: type %d was not equal to Size\n", field);
     return;
   }
-  if(render->size_count >= render->capacity) {
-    render->capacity *= 2;
-    render->size = (char**)realloc(render->size, render->capacity + 1 * sizeof(render->size));
+  const unsigned rcount = render->size_count;
+
+  if(rcount <= 0) {
+    render->capacity = 256;
+    render->size = calloc(1, sizeof(char*));
+    render->size[render->size_count] = item;
+    render->size_count += 1;
+    return;
   }
-  render->size = (char**)realloc(render->size, render->size_count + 1 * sizeof(render->size));
-  render->size[render->size_count] = item;
-  unsigned rcount = render->size_count;
-  char* size_offset = render->size[render->size_count];
+  if(rcount >= render->capacity) {
+    render->capacity *= 2;
+    render->size = (char**)realloc(render->size, render->capacity + 1 * sizeof(render->perms));
+    render->size[render->size_count] = item;
+    return;
+  }
+
+  render->size = (char**)realloc(render->size, rcount + 1 * sizeof(render->size));
+  render->size[rcount] = item;
+  const char* const size_offset = render->size[render->size_count];
   printf("in append_size render->size_count: %d render->size[offset]: %s\n", rcount, size_offset);
 #ifdef DEBUG
   printf("leaving %s\n", __FUNCTION__);
@@ -216,15 +183,22 @@ void renderer_append_path(struct renderer* render, enum field field, void* item)
     printf("error in append: type %d was not equal to Path\n", field);
     return;
   }
+  unsigned rcount = render->path_count;
+  if(rcount == 0 || render->capacity == 0) {
+    render->capacity = 256;
+    render->path = calloc(1, sizeof(char*));
+    render->path[0] = item;
+    render->path_count += 1;
+    return;
+  }
   if(render->path_count >= render->capacity) {
     render->capacity *= 2;
     render->path = (char**)realloc(render->path, render->capacity * sizeof(render->path));
   }
-  render->path = (char**)realloc(render->path, render->path_count + 1 * sizeof(render->perms));
+  render->path = (char**)realloc(render->path, rcount + 1 * sizeof(render->perms));
   render->path[render->path_count] = item;
-  unsigned rcount = render->path_count;
   char* path_offset = render->path[render->path_count];
-  printf("in append_path render->path_count: %d render->size[offset]: %s\n", rcount, path_offset);
+  printf("in append_path render->path_count: %d render->path[offset]: %s\n", rcount, path_offset);
 #ifdef DEBUG
   printf("leaving %s\n", __FUNCTION__);
 #endif
@@ -234,28 +208,38 @@ void renderer_append(struct renderer* render, enum field field, void* item) {
 #ifdef DEBUG
   printf("entering %s\n", __FUNCTION__);
 #endif
-  unsigned f_count = render->file_count;
   unsigned t_count = render->type_count;
   unsigned p_count = render->perms_count;
+  unsigned f_count = render->file_count;
   unsigned path_count = render->path_count;
-  if(f_count > 0 || t_count > 0 || p_count > 0 || path_count > 0) {
-    renderer_init(render);
-  }
+  /*
+  printf("%d ", t_count);
+  printf("%d ", p_count);
+  printf("%d ", f_count);
+  printf("%d\n", path_count);
+  */
   if(field == File) {
     renderer_append_file(render, File, item);
+    printf("RENDER->file=%s\n", render->file[render->file_count - 1]);
     render->file_count += 1;
   } else if(field == Type) {
     renderer_append_type(render, Type, item);
+    printf("RENDER->type=%s\n", render->type[render->type_count - 1]);
     render->type_count += 1;
   } else if(field == Perms) {
     renderer_append_perms(render, Perms, item);
+    printf("RENDER->perms=%s\n", render->perms[render->perms_count - 1]);
     render->perms_count += 1;
   } else if(field == Size) {
     renderer_append_size(render, Size, item);
+    printf("RENDER->size=%s\n", render->size[render->size_count - 1]);
     render->size_count += 1;
   } else if(field == Path) {
+#ifdef DEBUG
     printf("appending to path\n");
+#endif
     renderer_append_path(render, Path, item);
+    printf("RENDER->path=%s\n", render->path[render->path_count - 1]);
     render->path_count += 1;
   } else {
     printf("UNKNOWN field in field enum\n");
@@ -325,9 +309,6 @@ void render_perms(struct renderer* rend, char* path) {
 #ifdef DEBUG
   printf("entering %s\n", __FUNCTION__);
 #endif
-  if(!path || rend->perms_count <= 0) {
-    return;
-  }
   struct stat fi;
   fill_stat(path, &fi);
   char* perms = calloc(1, strlen(path) + 10);
@@ -352,9 +333,6 @@ void render_size(struct renderer* rend, char* path) {
 #ifdef DEBUG
   printf("entering %s\n", __FUNCTION__);
 #endif
-  if(!path || rend->size_count <= 0) {
-    return;
-  }
   struct stat fi;
   fill_stat(path, &fi);
   long long fi_size = fi.st_size;
@@ -362,7 +340,7 @@ void render_size(struct renderer* rend, char* path) {
   char* suffixes[] = {"", "k", "m", "g"}; // first entry was B, removed it because i didnt
                                           // need to know bytes for something that already
                                           // clearly is in bytes
-  int suffixIndex = 0;
+  unsigned suffixIndex = 0;
   while(fi_size >= 1024 && suffixIndex < 3) {
     fi_size /= 1024;
     suffixIndex++;
@@ -381,7 +359,7 @@ void render_file(struct renderer* rend, char* path) {
   if(!path) {
     return;
   }
-  int total_len = strlen(path);
+  unsigned total_len = strlen(path);
   char* file = calloc(1, total_len + 2);
   strncat(file, path, total_len);
   if(rend->state == long_view) {
@@ -438,7 +416,8 @@ void render_to_path(struct renderer* rend, enum state state, char* path) {
 #ifdef DEBUG
   printf("entering %s\n", __FUNCTION__);
 #endif
-  char* file = calloc(1, strlen(path) + 1);
+  unsigned buff = 5;
+  char* file = calloc(1, sizeof(char*));
   if(file == NULL) {
     printf("%s\n", strerror(errno));
   }
@@ -449,22 +428,28 @@ void render_to_path(struct renderer* rend, enum state state, char* path) {
     render_type(rend, path);
     render_perms(rend, path);
     render_size(rend, path);
-    render_file(rend, path);
-    size_t type_len, perms_len, size_len, file_len, total_len;
-    type_len = strlen(rend->type[rend->type_count]);
-    perms_len = strlen(rend->perms[rend->perms_count]);
-    size_len = strlen(rend->size[rend->size_count]);
-    file_len = strlen(rend->file[rend->file_count]);
-    file = realloc(file, type_len + perms_len + size_len + file_len);
+    // render_file(rend, path);
+    size_t type_count, perms_count, size_count, file_len, total_len;
+    type_count = sizeof(rend->type[rend->type_count - 1]);
+    perms_count = sizeof(rend->perms[rend->perms_count - 1]);
+    size_count = sizeof(rend->size[rend->size_count - 1]);
+    size_t type_len, perms_len, size_len;
+    type_len = strlen(rend->type[rend->type_count - 1]);
+    perms_len = strlen(rend->perms[rend->perms_count - 1]);
+    size_len = strlen(rend->size[rend->size_count - 1]);
+    // file_len = sizeof(rend->file[rend->file_count]);
+    file = realloc(file, type_len + perms_len + size_len);
     if(file == NULL) {
       printf("%s\n", strerror(errno));
     }
-    strcat(file, rend->type[rend->type_count]);
-    strcat(file, rend->perms[rend->perms_count]);
-    strcat(file, rend->size[rend->size_count]);
+    strcat(file, rend->type[rend->type_count - 1]);
+    strcat(file, rend->perms[rend->perms_count - 1]);
+    strcat(file, rend->size[rend->size_count - 1]);
   }
-  // render_file(rend, offset, file);
-  // rend->path[offset] = file;
+  renderer_append(rend, File, file);
+#ifdef DEBUG
+  printf("rend->file[rend->file_count]: %s\n", rend->file[rend->file_count - 1]);
+#endif
   renderer_append(rend, Path, file);
   return;
 }
@@ -483,7 +468,7 @@ struct renderer render(char* path, enum state state) {
     printf("%s: %s\n", path, strerror(errno));
     return rend;
   }
-  int i = 0;
+  unsigned i = 0;
   while((dirent = readdir(dir)) != NULL) {
     char* dname = dirent->d_name;
     if(strlen(dname) <= 2 && dname[0] == '.' || dname[0] == '.' && dname[1] == '.') {
@@ -503,7 +488,7 @@ void print_view(struct renderer render) {
 #ifdef DEBUG
   printf("entering %s\n", __FUNCTION__);
 #endif
-  for(int i = 0; i < render.path_count && render.path[i]; i++) {
+  for(unsigned i = 0; i < render.path_count && render.path[i]; i++) {
     printf("%s", render.path[i]);
   }
 #ifdef DEBUG
@@ -513,7 +498,7 @@ void print_view(struct renderer render) {
 // TODO: set up appending colors, 'd', '.' and 'l' at the beginning, permissions, time, and owner
 // size in the renderer
 
-int main(int argc, char** argv) {
+int main(int argc, char* argv[]) {
   enum state state;
   char* path = calloc(1, 4096);
   if(argc > 1) {
@@ -524,5 +509,5 @@ int main(int argc, char** argv) {
     path = getcwd(path, 4096);
   }
   struct renderer rend = render(path, state);
-  print_view(rend);
+  // print_view(rend);
 }
