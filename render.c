@@ -287,9 +287,11 @@ struct renderer render(char* path, enum state state) {
       continue;
     }
     render_file(&rend, dname);
-    render_size(&rend, dname);
-    render_type(&rend, dname);
-    render_perms(&rend, dname);
+    if(state == long_view) {
+      render_size(&rend, dname);
+      render_type(&rend, dname);
+      render_perms(&rend, dname);
+    }
     i++;
   }
   render_path(&rend);

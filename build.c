@@ -65,15 +65,19 @@ int main(int argc, char* argv[]) {
   }
   int idup = argc;
   char** arg_dup = argv;
-  if(argc > 1) {
-    idup -= 1;
-    arg_dup += 1;
+  if(idup > 1 && strcmp(argv[1], ".") == 0) {
+    run("main", arg_dup);
+  } else {
+    if(argc > 1) {
+      idup -= 1;
+      arg_dup += 1;
+    }
+    if(argc > 2) {
+      idup -= 1;
+      arg_dup += 1;
+    }
   }
-  if(argc > 2) {
-    idup -= 2;
-    arg_dup += 2;
-  }
-  run("render", arg_dup);
+  run("main", arg_dup);
   build_with_lib(files, libs, 1, 1);
   if(argc >= 3 && strcmp(argv[1], "-build") == 0 && strcmp(argv[2], "run") == 0) {
     for(int i = 0; i < sizeof(files) / sizeof(files[0]); i++) {
