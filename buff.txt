@@ -1,3 +1,0 @@
-first you start at the 0th string in the array, you set the minimum length to the 0th element
-then, you start to iterate through the array, checking whether the ith element is longer than the minimum length
-if the ith element is longer than the minimum length, you set the minimum and maximum length to the current length and you repeat steps 1-3 until you're at the end of the array

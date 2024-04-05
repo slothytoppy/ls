@@ -146,6 +146,7 @@ void print_path(struct renderer rend) {
 }
 
 void aligned_grid(struct renderer* rend) {
+  debug_log("entering %s", __FUNCTION__);
   if(rend->state == long_view) {
     unsigned max_len, max_size = 0;
     /* // was used for finding the longest string in rend->file.items[i]
@@ -168,8 +169,9 @@ void aligned_grid(struct renderer* rend) {
       max_size = len > max_size ? len : max_size;
     }
     printf("max_size=%d\n", max_size);
-    debug_log("max_len=%d\n", max_len);
+    debug_log("max_len=%d", max_len);
   }
+  debug_log("leaving %s", __FUNCTION__);
   return;
 }
 
@@ -206,9 +208,11 @@ struct renderer render(char* path, enum state state) {
 }
 
 void println(char* fmt, ...) {
+  debug_log("entering %s", __FUNCTION__);
   va_list args;
   va_start(args, fmt);
   vfprintf(stdout, fmt, args);
   printf("\n");
   va_end(args);
+  debug_log("leaving %s", __FUNCTION__);
 }

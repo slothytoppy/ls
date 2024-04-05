@@ -8,7 +8,7 @@ typedef struct darr_type {
   int (*append_func)(struct darr_type darr, void*);
 } darr;
 
-unsigned append(darr* darr, void* data, ...);
+unsigned append(darr* darr, void* data);
 unsigned darr_delete(darr* darr, int arr[]);
 
 #endif

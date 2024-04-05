@@ -3,7 +3,7 @@
 #include "./darr.h"
 #include <stdarg.h>
 
-unsigned append(darr* darr, void* data, ...) {
+unsigned append(darr* darr, void* data) {
   if(darr->append_func) {
     if(darr->append_func(*darr, data)) {
       return 1;
@@ -27,9 +27,5 @@ unsigned append(darr* darr, void* data, ...) {
   darr->items[darr->count] = data;
   darr->count += 1;
   darr->items[darr->count] = NULL;
-  va_list args;
-  va_start(args, data);
-  while(va_arg(args, void*)) {
-  }
   return 1;
 }
