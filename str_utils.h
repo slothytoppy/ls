@@ -1,5 +1,6 @@
 #ifndef STR_UTILS_H
 #define STR_UTILS_H
+
 unsigned str_len(char*);
 unsigned strn_len(char*, int);
 unsigned str_cmp(char*, char*);
@@ -10,4 +11,5 @@ char* str_dup(char*);
 char* str_cat(char*, char*);
 char* strn_cat(char*, char*, int);
 int ends_with(char*, char*);
-#endif
+
+#endif // STR_UTILS_H
