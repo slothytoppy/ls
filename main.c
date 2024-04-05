@@ -164,11 +164,11 @@ void aligned_grid(struct renderer* rend) {
         memset(size, ' ', max_size - len);
         strcat(size, rend->size.items[i]);
         rend->size.items[i] = size;
-        printf("%s\n", size);
+        debug_log("%s\n", size);
       }
       max_size = len > max_size ? len : max_size;
     }
-    printf("max_size=%d\n", max_size);
+    debug_log("max_size=%d\n", max_size);
     debug_log("max_len=%d", max_len);
   }
   debug_log("leaving %s", __FUNCTION__);
