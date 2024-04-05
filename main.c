@@ -11,14 +11,12 @@ int main(int argc, char** argv) {
     path = getcwd(path, 4096);
   }
   struct renderer rend = render(path, state);
-  // print_path(rend);
+  print_path(rend);
   return 0;
 }
 
 void fill_stat(char* x, struct stat* fi) {
-#ifdef DEBUG
-  println("entering %s", __FUNCTION__);
-#endif
+  debug_log("entering %s", __FUNCTION__);
   if(!x) {
     return;
   }
@@ -28,29 +26,21 @@ void fill_stat(char* x, struct stat* fi) {
     println("cwd: %s %s: %s", getcwd(cwd, 4096), x, strerror(errno));
     return;
   }
-#ifdef DEBUG
-  println("leaving %s", __FUNCTION__);
-#endif
+  debug_log("leaving %s", __FUNCTION__);
 }
 
 char* render_file(struct renderer* rend, char* path) {
-#ifdef DEBUG
-  println("entering %s", __FUNCTION__);
-#endif
+  debug_log("entering %s", __FUNCTION__);
   if(!path) {
     return NULL;
   }
   append(&rend->file, path);
-#ifdef DEBUG
-  println("leaving %s", __FUNCTION__);
-#endif
+  debug_log("leaving %s", __FUNCTION__);
   return path;
 }
 
 char* render_type(struct renderer* rend, char* path) {
-#ifdef DEBUG
-  println("entering %s", __FUNCTION__);
-#endif
+  debug_log("entering %s", __FUNCTION__);
   if(!path) {
     return NULL;
   }
@@ -66,16 +56,12 @@ char* render_type(struct renderer* rend, char* path) {
     file[0] = _type[2];
   }
   append(&rend->type, file);
-#ifdef DEBUG
-  println("leaving %s", __FUNCTION__);
-#endif
+  debug_log("leaving %s", __FUNCTION__);
   return file;
 }
 
 char* render_perms(struct renderer* rend, char* path) {
-#ifdef DEBUG
-  println("entering %s", __FUNCTION__);
-#endif
+  debug_log("entering %s", __FUNCTION__);
   if(!path) {
     return NULL;
   }
@@ -93,17 +79,13 @@ char* render_perms(struct renderer* rend, char* path) {
   perms[7] = (fi.st_mode & S_IRUSR) ? _perms[1] : _perms[3];
   perms[8] = (fi.st_mode & S_IRUSR) ? _perms[2] : _perms[3];
   append(&rend->perms, perms);
-#ifdef DEBUG
-  println("perms=%s", perms);
-  println("leaving %s", __FUNCTION__);
-#endif
+  debug_log("perms=%s", perms);
+  debug_log("leaving %s", __FUNCTION__);
   return perms;
 }
 
 char* render_size(struct renderer* rend, char* path) {
-#ifdef DEBUG
-  println("entering %s", __FUNCTION__);
-#endif
+  debug_log("entering %s", __FUNCTION__);
   if(!path) {
     return NULL;
   }
@@ -121,16 +103,12 @@ char* render_size(struct renderer* rend, char* path) {
   }
   snprintf(file, sizeof(fi_size) + 1, "%lld%s", fi_size, suffixes[suffixIndex]);
   append(&rend->size, file);
-#ifdef DEBUG
-  println("leaving %s", __FUNCTION__);
-#endif
+  debug_log("leaving %s", __FUNCTION__);
   return file;
 }
 
 int render_path(struct renderer* rend) {
-#ifdef DEBUG
-  println("entering %s", __func__);
-#endif
+  debug_log("entering %s", __func__);
   int file_len, size_len, type_len, perms_len, total_len;
   char *i_type, *i_perms, *i_size, *i_file;
   for(int i = 0; i < rend->file.count; i++) {
@@ -151,16 +129,12 @@ int render_path(struct renderer* rend) {
       append(&rend->path, rend->file.items[i]);
     }
   }
-#ifdef DEBUG
-  println("leaving %s", __func__);
-#endif
+  debug_log("leaving %s", __func__);
   return 1;
 }
 
 void print_path(struct renderer rend) {
-#ifdef DEBUG
-  println("entering %s", __FUNCTION__);
-#endif
+  debug_log("entering %s", __FUNCTION__);
   struct winsize winsize;
   ioctl(0, TIOCGWINSZ, &winsize);
   unsigned count = 0;
@@ -168,52 +142,39 @@ void print_path(struct renderer rend) {
   for(int i = 0; i < rend.path.count; i++) {
     printf("%s\n", (char*)rend.path.items[i]);
   }
-#ifdef DEBUG
-  println("leaving %s", __FUNCTION__);
-#endif
+  debug_log("leaving %s", __FUNCTION__);
 }
 
-void aligned_grid(const struct renderer* const rend) {
+void aligned_grid(struct renderer* rend) {
   if(rend->state == long_view) {
-    unsigned max_len = 0, new_len = 0, file_len = 0, path_len = 0, max_size = 0, final_len = 0;
-    int j = 0;
-    struct renderer rend_copy = {0};
-    for(int i = 0; rend->path.items[i + 1]; i++) {
-      if(strlen(rend->size.items[i]) > max_size) {
-        max_size = strlen(rend->size.items[i]);
-      }
+    unsigned max_len, max_size = 0;
+    /* // was used for finding the longest string in rend->file.items[i]
+    max_len = strlen(rend->file.items[0]);
+    char* file;
+    for(int i = 0; i < rend->file.count; i++) {
+      unsigned len = strlen(rend->file.items[i]);
+      max_len = len > max_len ? len : max_len;
     }
-    for(int i = 0; rend->path.items[i + 1]; i++) {
-      // printf("TOP\n");
-      file_len = strlen(rend->file.items[i]) + max_size;
-      path_len = strlen(rend->path.items[i]) + max_size;
-      final_len = path_len - file_len;
-      char* file = calloc(1, final_len + strlen(rend->path.items[i]));
-      unsigned file_len = strlen(rend->file.items[i]);
-      for(int x = 0; x < final_len; x++) {
-        if(strlen(rend->file.items[i]) - final_len > final_len) {
-          file[x] = ' ';
-        }
-        // printf("x=%d final_len=%i\n", x, final_len);
+    */
+    for(int i = 0; i < rend->size.count; i++) {
+      unsigned len = strlen(rend->size.items[i]);
+      char* size = calloc(1, max_size);
+      if(len <= max_size) {
+        memset(size, ' ', max_size - len);
+        strcat(size, rend->size.items[i]);
+        rend->size.items[i] = size;
+        printf("%s\n", size);
       }
-      strcat(file, rend->file.items[i]);
-      printf("rend_copy=%s\n", file);
-      append(&rend_copy.file, file);
+      max_size = len > max_size ? len : max_size;
     }
-    for(int i = 0; i < rend_copy.file.count; i++) {
-      if(strlen(rend_copy.file.items[i]) != strlen(rend_copy.file.items[i + 1])) {
-        // printf("NOT EQUAL\n");
-      }
-    }
-    // printf("END\n");
+    printf("max_size=%d\n", max_size);
+    debug_log("max_len=%d\n", max_len);
   }
   return;
 }
 
 struct renderer render(char* path, enum state state) {
-#ifdef DEBUG
-  println("entering %s", __FUNCTION__);
-#endif
+  debug_log("entering %s", __FUNCTION__);
   struct dirent* dirent;
   struct stat fi;
   struct renderer rend = {0};
@@ -232,17 +193,15 @@ struct renderer render(char* path, enum state state) {
     if(state == long_view) {
       render_size(&rend, dname);
       render_type(&rend, dname);
+      aligned_grid(&rend);
       render_perms(&rend, dname);
     }
     render_file(&rend, dname);
     i++;
   }
   render_path(&rend); // render_path assumes all three other fields are filled out
-  aligned_grid(&rend);
   closedir(dir);
-#ifdef DEBUG
-  println("leaving %s", __FUNCTION__);
-#endif
+  debug_log("leaving %s", __FUNCTION__);
   return rend;
 }
 

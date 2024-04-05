@@ -68,6 +68,7 @@ int main(int argc, char* argv[]) {
   if(idup > 1 && strcmp(argv[1], ".") == 0) {
     run("main", arg_dup);
   } else {
+    arg_dup++;
     run("main", arg_dup);
   }
   // build_with_lib(files, libs, 1, 1);

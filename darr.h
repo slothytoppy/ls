@@ -9,6 +9,6 @@ typedef struct darr_type {
 } darr;
 
 unsigned append(darr* darr, void* data, ...);
-unsigned delete(darr* darr, int arr[]);
+unsigned darr_delete(darr* darr, int arr[]);
 
 #endif

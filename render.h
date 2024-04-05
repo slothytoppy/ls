@@ -1,7 +1,8 @@
 #ifndef RENDER_H
 #define RENDER_H
 
-#include "common_headers.h"
+#include "./common_headers.h"
+#include "./logger.h"
 
 #include "./darr.h"
 
@@ -38,12 +39,15 @@ typedef enum state {
 
 typedef struct {
   // no perms or type offset because they have constant length
+  unsigned perms_offset;
+  unsigned type_offset;
   unsigned size_offset;
+  unsigned file_offset;
+  unsigned path_offset;
+
   unsigned user_offset;
   unsigned group_offset;
   unsigned owner_offset;
-  unsigned file_offset;
-
 } Offset;
 
 typedef struct {
