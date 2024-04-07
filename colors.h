@@ -1,4 +1,3 @@
-
 char* file_colors[] = {
     "\e[0;32m",
     "\033[38:5:4m",
@@ -17,7 +16,7 @@ typedef enum colors {
   light_green,
   light_blue,
   white,
-} colors;
+} _colors;
 
 typedef enum renderable_colors {
   size = green,

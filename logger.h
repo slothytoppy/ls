@@ -65,4 +65,4 @@ void debug_log(char* fmt, ...) {
   return;
 }
 
-#endif
+#endif // LOGGER_H

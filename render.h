@@ -6,6 +6,17 @@
 
 #include "./darr.h"
 
+char* file_colors[] = {
+    "\e[0;32m",
+    "\033[38:5:4m",
+    "\e[0;34m",
+    "\033[38:5:208m",
+    "\033[38:5:255m",
+    "\e[0;32m",
+    "\033[38:5:73m",
+    "\033[0m",
+};
+
 typedef enum {
   size,
   time,
@@ -18,8 +29,8 @@ typedef enum {
 } colors;
 
 typedef struct Colors {
-  colors color;
-  char* file_colors[];
+  colors colors;
+  char** file_colors;
 } Colors;
 
 typedef enum Field {
@@ -104,19 +115,22 @@ struct renderer {
   darr size;
   darr path;
   Options options;
-  Colors Colors;
+  darr colors;
 };
 
 void fill_stat(char* x, struct stat* fi);
-char* render_file(struct renderer* rend, char* path);
-char* render_type(struct renderer* rend, char* path);
-char* render_perms(struct renderer* rend, char* path);
-char* render_size(struct renderer* rend, char* path);
+void render_file(struct renderer* rend, char* path);
+void render_type(struct renderer* rend);
+void render_perms(struct renderer* rend);
+void render_size(struct renderer* rend);
 int render_path(struct renderer* rend);
 struct renderer render(char* path, enum state state);
 void debug_print(char* fmt, ...);
 void print_path(struct renderer rend);
 void println(char*, ...);
+unsigned longest_string(darr* darr);
+int render_path_colors(struct renderer* rend);
+int set_renderable_colors(struct renderer* rend, char** colors, unsigned count);
 
 // int render_path_test(struct renderer* rend);
 // char* render_file_color(struct renderer* rend);
