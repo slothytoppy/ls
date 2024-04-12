@@ -108,21 +108,17 @@ typedef struct {
 } Options;
 
 struct renderer {
+  struct stat fi;
   state state;
   darr file;
   darr type;
   darr perms;
   darr size;
   darr path;
-  Options options;
   darr colors;
+  Options options;
 };
 
-void fill_stat(char* x, struct stat* fi);
-void render_file(struct renderer* rend, char* path);
-void render_type(struct renderer* rend);
-void render_perms(struct renderer* rend);
-void render_size(struct renderer* rend);
 int render_path(struct renderer* rend);
 struct renderer render(char* path, enum state state);
 void debug_print(char* fmt, ...);

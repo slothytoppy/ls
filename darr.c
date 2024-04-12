@@ -2,7 +2,7 @@
 
 int printf(const char*, ...);
 
-unsigned append(darr* darr, void* data) {
+unsigned darr_append(darr* darr, void* data) {
   if(darr->count == 0) {
     darr->items = calloc(1, 8 * sizeof(char*));
     darr->capacity = 8;
