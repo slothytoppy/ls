@@ -1,13 +1,8 @@
 main
 build
 build.old
-hello
-ncurses_test/test
 render
-sg
-str_tests/t1
-test
-useless
-darr 
-fs_lib
+useless/
+fs_lib/
+str_view/
 

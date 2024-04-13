@@ -3,7 +3,11 @@
 #include <assert.h>
 #include <stdbool.h>
 
+#ifdef DEBUG
 #define print_fn_name printf("%s\n", __FUNCTION__)
+#else
+#define print_fn_name
+#endif
 
 int main(int argc, char** argv) {
   print_fn_name;
